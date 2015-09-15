@@ -1,0 +1,13 @@
+{
+  "title": "Password Encrypter",
+  "name": "pwencrypt",
+  "version": "0.0.1",
+  "description": "Hashes all input:type=password fields.",
+  "main": "main.js",
+  "author": "GammaSQ",
+  "engines": {
+    "firefox": ">=38.0a1",
+    "fennec": ">=38.0a1"
+  },
+  "license": "MIT"
+}
