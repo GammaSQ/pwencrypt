@@ -13,7 +13,7 @@ if(!storage.storage.encSalt){
 
 var enter_password = require("sdk/panel").Panel({
   contentURL: data.url("enter_password.html"),
-  contetScriptFile: data.url("enter_password.js")
+  contentScriptFile: data.url("enter_password.js")
 })
 
 var enter_salt = require("sdk/panel").Panel({
@@ -22,6 +22,12 @@ var enter_salt = require("sdk/panel").Panel({
 })
 
 exports.main = function(options){
+  validSalt = false;
+
+  if(options.loadReason == "install"){
+    storage.storage.encSalt = '';
+  }
+
   enter_password.on("show", function(){
     enter_password.port.emit("show");
   });
@@ -31,28 +37,49 @@ exports.main = function(options){
   });
 
   enter_password.port.on("password_entered", function(password){
-    //salt = encrypt(storage.storage.encSalt, password);
+  	var salt = '';
+    try{
+      salt = sjcl.decrypt(password, storage.storage.encSalt);
+    } catch (err){
+      if(err instanceof sjcl.exception.invalid || err instanceof sjcl.exception.corrupt)
+        return;
+      else
+        throw err;
+    }
+    validSalt = true;
     loadScript(salt);
+    enter_password.hide();
   });
 
   enter_salt.port.on("salt_entered", function(salt){
-  	enter_salt.hide();
-  	if(salt[0] != salt[1]){
-  	  return enter_salt.show();
-  	}
-  	var inter = salt[0];
-  	for(var i=0; i<1000; i++){
+    if(salt[0] != salt[1]){
+      return;
+    }
+    validSalt = true;
+    var inter = salt[0];
+    for(var i=0; i<1000; i++){
       inter = sjcl.hash.sha256.hash(inter);
-  	}
-    hashSalt = sjcl.codec.base64.fromBits(inter);
+    }
+    hashSalt = sjcl.codec.base64.fromBits(inter, true);
     loadScript(hashSalt);
-    //storage.storage.encSalt = encrypt(hashSalt, salt);
+    enter_salt.hide();
+    storage.storage.encSalt = sjcl.encrypt(salt[0], hashSalt);
   });
 
-  if(storage.storage.encSalt){
-    enter_password.show();
-  } else {
+  enter_salt.on("hide", function(){
+    if(validSalt) return;
     enter_salt.show();
+  })
+
+  enter_password.on("hide", function(){
+    if(validSalt) return;
+    enter_password.show();
+  })
+
+  if(storage.storage.encSalt){
+    enter_password.show({focus:true});
+  } else {
+    enter_salt.show({focus:true});
   }
 
   function loadScript(salt){
@@ -63,22 +90,3 @@ exports.main = function(options){
     });
   }
 }
-
-
-salt = '';
-
-
-
-// Create a page-mod
-// It will run a script whenever a ".org" URL is loaded
-// The script replaces the page contents with a message
-/*exports.main = function (options){
-  // Import the page-mod API
-  var pageMod = require("sdk/page-mod");
-  // Import the self API
-  var self = require("sdk/self");
-  pageMod.PageMod({
-    include: "*",
-    contentScriptFile: self.data.url("PWhash.js")
-  });
-}*/

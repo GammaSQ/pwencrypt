@@ -4,7 +4,6 @@ var saltForm = document.getElementById("salt_form");
 saltForm.addEventListener("submit", function submission(event){
 	self.port.emit("salt_entered", [salt1.value, salt2.value]);
 }, true);
-
 self.port.on("show", function onShow(){
 	salt1.focus();
 });
