@@ -11,3 +11,16 @@ TODO:
 * find a better layouting/display method to not break pages layout and to circumvent any keyloggers.
 * make a user-interface for hashing manually/manipulating the hash. (eg. if the domainname changed for some reason.)
 * make a button to reset/change salt.
+
+How to use:
+You need jpm, the mozilla addon- ... something. It's a node module and makes things work.
+
+    npm install jpm -g
+
+Then visit the pwencrypt-directory and execute
+
+    jpm xpi
+
+Then you can just open the newly created xpi in your favourite browser. (That should be the firefox)
+A little suggestions: Run this on a different profile than what you usually use to browse the net.
+If the popups are bothering you: don't worry, just browse to "about:addons" and remove the pwencrypt addon. And please let me know about the problem, adding your browser- and OS-version.
