@@ -4,21 +4,56 @@ var pageMod = require("sdk/page-mod");
 var self = require("sdk/self");
 var data = self.data;
 
+var panels = require("sdk/panel");
+
+var tabs = require("sdk/tabs");
+
 var sjcl = require("./data/sjcl.js");
+
+var URL = require("sdk/url").URL;
+
+var buttons = require("sdk/ui/button/action");
+
+var button = buttons.ActionButton({
+  id: "hash-my-input",
+  label: "Generate a hashed password",
+  icon: {
+    "16": "./hash-icon-16.png",
+    "32": "./hash-icon-32.png",
+    "64": "./hash-icon-64.png",
+    "128": "./hash-icon-128.png"
+  },
+  onClick: getHash
+});
+
+function getHash(state) {
+  hashing_popup = panels.Panel({
+    contentURL: data.url("hashing_popup.html"),
+    contentScriptFile: data.url("hashing_popup.js")
+  });
+
+  hashing_popup.port.on("hash_me", function(vals){
+  	var hash = sjcl.codec.base64.fromBits(sjcl.hash.sha256.hash(vals[0]+vals[1]+validSalt))
+  });
+  hashing_popup.show();
+  hashing_popup.port.emit("init_host", URL(tabs.activeTab.url).host || '');
+}
 
 var storage = require("sdk/simple-storage");
 if(!storage.storage.encSalt){
   storage.storage.encSalt = '';
 }
 
-var enter_password = require("sdk/panel").Panel({
+var enter_password = panels.Panel({
   contentURL: data.url("enter_password.html"),
   contentScriptFile: data.url("enter_password.js")
 })
 
-var enter_salt = require("sdk/panel").Panel({
+var enter_salt = panels.Panel({
   contentURL: data.url("enter_salt.html"),
-  contentScriptFile: data.url("enter_salt.js")
+  contentScriptFile: data.url("enter_salt.js"),
+  contextMenu:true,
+  contentSryle:"position:static;"
 })
 
 exports.main = function(options){
@@ -46,7 +81,7 @@ exports.main = function(options){
       else
         throw err;
     }
-    validSalt = true;
+    validSalt = salt;
     loadScript(salt);
     enter_password.hide();
   });
@@ -55,12 +90,12 @@ exports.main = function(options){
     if(salt[0] != salt[1]){
       return;
     }
-    validSalt = true;
     var inter = salt[0];
     for(var i=0; i<1000; i++){
       inter = sjcl.hash.sha256.hash(inter);
     }
     hashSalt = sjcl.codec.base64.fromBits(inter, true);
+    validSalt = hashSalt;
     loadScript(hashSalt);
     enter_salt.hide();
     storage.storage.encSalt = sjcl.encrypt(salt[0], hashSalt);
@@ -86,7 +121,8 @@ exports.main = function(options){
     pageMod.PageMod({
       include:"*",
       contentScriptFile: data.url('PWhash.js'),
-      contentScriptOptions: {"salt" : salt}
+      contentScriptOptions: {"salt" : salt},
+      contentScriptWhen:"ready"
     });
   }
 }
