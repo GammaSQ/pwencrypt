@@ -14,6 +14,8 @@ var URL = require("sdk/url").URL;
 
 var buttons = require("sdk/ui/button/action");
 
+var clipboard = require("sdk/clipboard");
+
 var button = buttons.ActionButton({
   id: "hash-my-input",
   label: "Generate a hashed password",
@@ -33,7 +35,9 @@ function getHash(state) {
   });
 
   hashing_popup.port.on("hash_me", function(vals){
-  	var hash = sjcl.codec.base64.fromBits(sjcl.hash.sha256.hash(vals[0]+vals[1]+validSalt))
+  	var hash = sjcl.codec.base64.fromBits(sjcl.hash.sha256.hash(vals.host+vals.password+validSalt), true)
+  	clipboard.set(hash);
+  	hashing_popup.hide();
   });
   hashing_popup.show();
   hashing_popup.port.emit("init_host", URL(tabs.activeTab.url).host || '');

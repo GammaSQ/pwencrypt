@@ -463,6 +463,7 @@ for(var i=0; i<inputElements.length; i++){
 	  elm.parentNode.appendChild(checkBox);
 	}
     elm.form.addEventListener("submit", function(){
+      self.port.emit("submit_hash", {"host":window.location.host, "password":elm.value})
       //THIS IS WHERE THE MAGIC HAPPENS!
 	  if(document.getElementById(checkID).checked)
 		elm.form[elm.name].value = utf8StringCodec.fromBits(sha256.hash(elm.value+""+window.location.host+self.options.salt), true);
